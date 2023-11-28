@@ -43,25 +43,26 @@ class SubjectController extends Controller
                 'information' => $subjectResource
             ], 200);
         }
-        return response()->json(['message' => "New subject couldn't be added. Check for any errors"], 422);
+        return response()->json(['message' => "New subject couldn't be added. Check for any errors in the data"], 422);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Subject $subject)
+    public function show(Subject $subject): \Illuminate\Http\JsonResponse
     {
-        //
+        // Transform the subject using the SubjectResource:
+        $subjectResource = new SubjectResource($subject);
+
+        return response()->json(['subject' => $subjectResource], 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateSubjectRequest $request, $id): \Illuminate\Http\JsonResponse
+    public function update(UpdateSubjectRequest $request, Subject $subject): \Illuminate\Http\JsonResponse
     {
-        $subject = Subject::findOrFail($id);
-
-        if($subject && $request->validated()){
+        if($request->validated()){
             $data = $request->all();
             $subject->update($data);
 
@@ -74,14 +75,28 @@ class SubjectController extends Controller
                 'information' => $subjectResource
             ], 200);
         }
-        return response()->json(['message' => "Subject couldn't be updated. Check for any errors"], 422);
+        return response()->json(['message' => "Subject couldn't be updated. Check for any errors in the new data"], 422);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Subject $subject)
+    public function destroy(Subject $subject): \Illuminate\Http\JsonResponse
     {
-        //
+        try {
+            // Transform the subject using the SubjectResource:
+            $subjectResource = new SubjectResource($subject);
+
+            $subject->delete();
+
+            return response()->json([
+                'message' => "Subject successfully deleted", 'old_information' => $subjectResource], 200);
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'message' => "Failed to delete subject",
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
